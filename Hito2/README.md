@@ -1,2 +1,2 @@
 # Grupo-6-GrooveSpace
-rama nueva
+Hito 2 Readme.md
