@@ -1,1 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrooveSpace - Solicitar Turno</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="nueva-reserva.html">Solicitar Turno</a></li>
+                <li><a href="mis-reservas.html">Mis Reservas</a></li>
+            </ul>
+        </nav>
+    </header>
 
+    <main>
+        <section>
+            <h1>Iniciar Nueva Reserva</h1>
+            <p>Selecciona tu sala y horarios. Las horas disponibles se confirmarán en el siguiente paso.</p>
+            
+            <!-- Formulario HTML que simula la funcionalidad mediante el atributo action -->
+            <form action="confirmacion.html" class="form-reserva">
+                <label for="sala">Tipo de Sala:</label>
+                <select id="sala" name="sala" required>
+                    <option value="">Selecciona una sala...</option>
+                    <option value="standard">Sala Standard</option>
+                    <option value="premium">Sala Premium</option>
+                    <option value="bateria">Sala de Batería</option>
+                </select>
+
+                <label for="fecha">Fecha del Ensayo:</label>
+                <input type="date" id="fecha" name="fecha" required>
+
+                <label for="hora">Horario de inicio:</label>
+                <input type="time" id="hora" name="hora" required>
+
+                <label for="duracion">Duración (horas):</label>
+                <input type="number" id="duracion" name="duracion" min="1" max="6" required>
+
+                <label>Equipamiento Extra (Opcional):</label>
+                <div>
+                    <input type="checkbox" id="guitarra" name="extras" value="guitarra">
+                    <label for="guitarra" style="color: #fff; font-weight: normal;">Guitarra Eléctrica</label><br>
+                    <input type="checkbox" id="pedal" name="extras" value="pedal">
+                    <label for="pedal" style="color: #fff; font-weight: normal;">Pedalera de efectos</label><br>
+                    <input type="checkbox" id="platillos" name="extras" value="platillos">
+                    <label for="platillos" style="color: #fff; font-weight: normal;">Set de Platillos</label>
+                </div>
+
+                <button type="submit" class="btn-neon">Confirmar Reserva de Sala</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 GrooveSpace - Plataforma de Reservas Acústicas.</p>
+    </footer>
+</body>
+</html>
