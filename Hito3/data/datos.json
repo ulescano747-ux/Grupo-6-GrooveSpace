@@ -1,0 +1,20 @@
+{
+  "usuarios": [
+    { "id": 1, "username": "musico1", "nombre": "Lucas", "rol": "musico", "password": "123" },
+    { "id": 2, "username": "jefe", "nombre": "Martín", "rol": "dueño", "password": "123" },
+    { "id": 3, "username": "staff", "nombre": "Sofía", "rol": "encargado", "password": "123" }
+  ],
+  "salas": [
+    { "id": "standard", "nombre": "Sala Standard", "estado": "Disponible", "precioFijo": 3500 },
+    { "id": "premium", "nombre": "Sala Premium", "estado": "Disponible", "precioFijo": 5500 },
+    { "id": "bateria", "nombre": "Sala de Batería", "estado": "Mantenimiento", "precioFijo": 4000 }
+  ],
+  "inventario": [
+    { "id": "i1", "tipo": "Guitarra Eléctrica", "cantidadTotal": 3, "enUso": 1 },
+    { "id": "i2", "tipo": "Pedalera", "cantidadTotal": 2, "enUso": 0 },
+    { "id": "i3", "tipo": "Platillos", "cantidadTotal": 4, "enUso": 2 }
+  ],
+  "reservas": [
+    { "id": 101, "usuarioId": 1, "sala": "Sala Premium", "fecha": "2026-08-14", "precio": 11000, "insExtra": ["Pedalera"] }
+  ]
+}
