@@ -3,42 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GrooveSpace - Mis Reservas</title>
+    <title>GrooveSpace - Mis reservas</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/scripts.js" defer></script>
 </head>
 <body>
     <header>
         <nav>
             <ul>
                 <li><a href="../index.html">Inicio</a></li>
-                <li><a href="nueva-reserva.html">Solicitar Turno</a></li>
-                <li><a href="mis-reservas.html">Mis Reservas</a></li>
+                <li><a href="nueva-reserva.html">Solicitar turno</a></li>
+                <li><a href="mis-reservas.html">Mis reservas</a></li>
             </ul>
+            <div id="contenedor-usuario-nav"></div>
         </nav>
     </header>
 
     <main>
         <section>
-            <h1>Mi Historial de Ensayos</h1>
-            <p>Consulta tus horas consumidas, reservas futuras y cancela turnos con anticipación.</p>
-
-            <article style="border: 1px solid #555; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-                <h3 style="color: #39ff14;">Próximo Ensayo</h3>
-                <p><strong>Viernes 14 de Agosto, 2026 - 18:00 hs</strong> | Sala Premium</p>
-                <button style="background-color: transparent; border: 1px solid #ff3939; color: #ff3939; padding: 8px; cursor: pointer;">Cancelar Turno</button>
-            </article>
-
-            <article style="border: 1px solid #333; padding: 15px; margin-bottom: 20px; border-radius: 5px; color: #888;">
-                <h3>Ensayos Pasados</h3>
-                <p><strong>Jueves 06 de Agosto, 2026</strong> | Sala Standard - 2 horas consumidas.</p>
-                <hr style="border-color: #333;">
-                <p><strong>Lunes 03 de Agosto, 2026</strong> | Sala de Batería - 1 hora consumida.</p>
-            </article>
+            <div class="reservas-cabecera">
+                <div>
+                    <h1>Mis reservas</h1>
+                    <p>Consulta tus próximos ensayos y el estado de cada reserva.</p>
+                    <p id="resumen-reservas" aria-live="polite">Cargando tus reservas...</p>
+                </div>
+                <a class="btn-neon" href="nueva-reserva.html">Solicitar otro turno</a>
+            </div>
+            <div id="lista-reservas" aria-live="polite"></div>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2026 GrooveSpace - Plataforma de Reservas Acústicas.</p>
+        <p>&copy; 2026 GrooveSpace - Plataforma de reservas acústicas.</p>
     </footer>
 </body>
 </html>
