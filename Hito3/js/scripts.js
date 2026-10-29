@@ -1,398 +1,438 @@
-// Datos por defecto de respaldo (se usan si el fetch falla o se abre con file://)
-const DATOS_POR_DEFECTO = {
-    usuarios: [
-        { id: 1, username: "musico1", nombre: "Lucas (Músico)", rol: "musico", password: "123" },
-        { id: 2, username: "jefe", nombre: "Martín (Dueño)", rol: "dueño", password: "123" },
-        { id: 3, username: "staff", nombre: "Sofía (Encargada)", rol: "encargado", password: "123" }
-    ],
-    salas: [
-        { id: "standard", nombre: "Sala Standard", estado: "Disponible", precioFijo: 3500 },
-        { id: "premium", nombre: "Sala Premium", estado: "Disponible", precioFijo: 5500 },
-        { id: "bateria", nombre: "Sala de Batería", estado: "Mantenimiento", precioFijo: 4000 }
-    ],
-    inventario: [
-        { id: "i1", tipo: "Guitarra Eléctrica", cantidadTotal: 3, enUso: 1 },
-        { id: "i2", tipo: "Pedalera", cantidadTotal: 2, enUso: 0 },
-        { id: "i3", tipo: "Platillos", cantidadTotal: 4, enUso: 2 }
-    ],
-    reservas: [
-        { id: 101, usuarioId: 1, sala: "Sala Premium", fecha: "2026-08-14", hora: "18:00", duracion: 2, extras: ["Pedalera de efectos"], estado: "Confirmada", total: 11000 }
-    ]
-};
+document.addEventListener("DOMContentLoaded", iniciar);
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await cargarDatosIniciales();
-    actualizarInterfazUsuario();
-    configurarLoginModal();
-    
-    // Ejecutar lógica según la página actual
-    if (document.getElementById("lista-reservas")) {
-        cargarMisReservas();
-    }
+async function iniciar() {
+    await cargarDatos();
+    actualizarUsuario();
+    configurarLogin();
+    mostrarSalas();
+    cargarSalas();
+    configurarReserva();
+    mostrarMisReservas();
+    mostrarConfirmacion();
+}
 
-    if (document.getElementById("form-reserva")) {
-        configurarFormularioReserva();
-    }
-});
-
-// 1. Carga Asincrónica con Fallback Seguro
-async function cargarDatosIniciales() {
-    const datosExistentes = localStorage.getItem("groovespace_datos");
-    
-    if (datosExistentes) {
-        try {
-            const parsed = JSON.parse(datosExistentes);
-            if (parsed.usuarios && parsed.salas && parsed.inventario && parsed.usuarios.length >= 3) {
-                return;
-            }
-        } catch (e) {
-            console.warn("Datos obsoletos en localStorage. Recargando...");
-        }
-    }
+async function cargarDatos() {
+    const ruta = location.pathname.includes("/pages/") ? "../data/datos.json" : "data/datos.json";
 
     try {
-        const esPaginaInterna = window.location.pathname.includes("/pages/");
-        const rutaJson = esPaginaInterna ? "../data/datos.json" : "data/datos.json";
-        
-        const respuesta = await fetch(rutaJson);
-        if (!respuesta.ok) throw new Error("No se pudo obtener datos.json");
-        
+        const respuesta = await fetch(ruta);
+        if (!respuesta.ok) throw new Error("No se pudieron cargar los datos.");
+
         const datos = await respuesta.json();
-        localStorage.setItem("groovespace_datos", JSON.stringify(datos));
-        console.log("Datos cargados correctamente desde JSON.");
+        const guardados = leerDatos();
+
+        if (guardados) {
+            datos.salas.forEach(sala => {
+                const anterior = (guardados.salas || []).find(item => item.id === sala.id);
+                if (anterior) sala.estado = anterior.estado;
+            });
+
+            datos.inventario.forEach(item => {
+                const anterior = (guardados.inventario || []).find(guardado => guardado.id === item.id);
+                if (anterior) item.enUso = anterior.enUso;
+            });
+
+            (guardados.reservas || []).forEach(reserva => {
+                const indice = datos.reservas.findIndex(item => item.id === reserva.id);
+                if (indice === -1) datos.reservas.push(reserva);
+                else datos.reservas[indice] = reserva;
+            });
+        }
+
+        guardarDatos(datos);
     } catch (error) {
-        console.warn("Servidor/CORS no disponible. Inicializando con datos de respaldo.", error);
-        localStorage.setItem("groovespace_datos", JSON.stringify(DATOS_POR_DEFECTO));
+        if (!leerDatos()) {
+            console.error(error);
+            guardarDatos({ usuarios: [], salas: [], inventario: [], reservas: [] });
+        }
     }
 }
 
-// Métodos de localStorage
-function obtenerDatosApp() {
+function leerDatos() {
     try {
         const datos = JSON.parse(localStorage.getItem("groovespace_datos"));
-        if (datos && datos.usuarios && datos.usuarios.length > 0) {
-            return datos;
-        }
-    } catch (e) {
-        console.error("Error al leer localStorage:", e);
-    }
-    return DATOS_POR_DEFECTO;
-}
-
-function guardarDatosApp(datos) {
-    localStorage.setItem("groovespace_datos", JSON.stringify(datos));
-}
-
-function obtenerUsuarioSesion() {
-    try {
-        return JSON.parse(localStorage.getItem("groovespace_usuario_activo"));
-    } catch (e) {
+        if (datos && Array.isArray(datos.usuarios)) return datos;
+    } catch (error) {
         return null;
     }
 }
 
-// 2. Control del Modal de Login (Sintaxis corregida)
-function configurarLoginModal() {
-    const btnOpen = document.getElementById("btn-login-nav");
+function obtenerDatos() {
+    return leerDatos() || { usuarios: [], salas: [], inventario: [], reservas: [] };
+}
+
+function guardarDatos(datos) {
+    localStorage.setItem("groovespace_datos", JSON.stringify(datos));
+}
+
+function obtenerUsuario() {
+    try {
+        return JSON.parse(localStorage.getItem("groovespace_usuario_activo"));
+    } catch (error) {
+        localStorage.removeItem("groovespace_usuario_activo");
+        return null;
+    }
+}
+
+function configurarLogin() {
     const modal = document.getElementById("modal-login");
-    const btnClose = document.getElementById("btn-cerrar-modal");
-    const formLogin = document.getElementById("form-login");
+    const abrir = document.getElementById("btn-login-nav");
+    const cerrar = document.getElementById("btn-cerrar-modal");
+    const formulario = document.getElementById("form-login");
 
-    if (btnOpen) {
-        btnOpen.onclick = () => modal?.classList.add("activo");
-    }
-    if (btnClose) {
-        btnClose.onclick = () => modal?.classList.remove("activo");
-    }
+    if (abrir && modal) abrir.onclick = function() { modal.classList.add("activo"); };
+    if (cerrar && modal) cerrar.onclick = function() { modal.classList.remove("activo"); };
+    if (!formulario) return;
 
-    if (formLogin) {
-        formLogin.onsubmit = (e) => {
-            e.preventDefault();
-            const userVal = document.getElementById("login-user").value.trim();
-            const passVal = document.getElementById("login-pass").value.trim();
+    formulario.onsubmit = function(event) {
+        event.preventDefault();
+        const nombre = document.getElementById("login-user").value.trim().toLowerCase();
+        const clave = document.getElementById("login-pass").value;
+        const usuario = obtenerDatos().usuarios.find(item =>
+            item.username.toLowerCase() === nombre && item.password === clave
+        );
 
-            const datos = obtenerDatosApp();
-            const usuarioEncontrado = datos.usuarios.find(
-                u => u.username.toLowerCase() === userVal.toLowerCase() && u.password === passVal
-            );
-
-            if (usuarioEncontrado) {
-                localStorage.setItem("groovespace_usuario_activo", JSON.stringify(usuarioEncontrado));
-                modal?.classList.remove("activo");
-                actualizarInterfazUsuario();
-                alert(`¡Bienvenido/a, ${usuarioEncontrado.nombre}!`);
-                if (document.getElementById("lista-reservas")) cargarMisReservas();
-            } else {
-                alert("Credenciales incorrectas.\n\nPrueba con los siguientes usuarios:\n- musico1 / 123 (Músico)\n- jefe / 123 (Dueño)\n- staff / 123 (Encargado)");
-            }
-        };
-    }
-}
-
-// Actualización del encabezado según estado de sesión
-function actualizarInterfazUsuario() {
-    const usuario = obtenerUsuarioSesion();
-    const contenedorNav = document.getElementById("contenedor-usuario-nav");
-    const tituloBienvenida = document.getElementById("titulo-bienvenida");
-
-    if (contenedorNav) {
-        if (usuario) {
-            contenedorNav.innerHTML = `
-                <span style="color: #39ff14; font-weight: bold; margin-right: 10px;">👤 ${usuario.nombre} (${usuario.rol})</span>
-                <button id="btn-logout" class="btn-logout" style="background: transparent; border: 1px solid #ff3939; color: #ff3939; padding: 5px 10px; cursor: pointer; border-radius: 4px;">Cerrar Sesión</button>
-            `;
-            document.getElementById("btn-logout")?.addEventListener("click", () => {
-                localStorage.removeItem("groovespace_usuario_activo");
-                window.location.reload();
-            });
-        } else {
-            contenedorNav.innerHTML = `
-                <button id="btn-login-nav" class="btn-neon" style="padding: 5px 15px; cursor: pointer;">Iniciar Sesión</button>
-            `;
-            configurarLoginModal();
-        }
-    }
-
-    if (tituloBienvenida) {
-        tituloBienvenida.textContent = usuario 
-            ? `Bienvenido a GrooveSpace, ${usuario.nombre}` 
-            : "Bienvenido a GrooveSpace";
-    }
-
-    if (usuario) {
-        renderizarVistaPorRol(usuario);
-    }
-}
-
-// 3. Vistas y Enrutamiento según Diagrama de Roles
-function renderizarVistaPorRol(usuario) {
-    const mainContenedor = document.querySelector("main");
-    const navUl = document.querySelector("nav ul");
-    const datos = obtenerDatosApp();
-
-    if (!mainContenedor) return;
-
-    if (usuario.rol !== "musico") {
-        if (navUl) navUl.style.display = "none"; 
-    } else {
-        if (navUl) navUl.style.display = "flex";
-        return;
-    }
-
-    // Panel del DUEÑO (Solo lectura)
-    if (usuario.rol === "dueño") {
-        mainContenedor.innerHTML = `
-            <section style="padding: 20px;">
-                <h2>Panel Gerencial (Dueño)</h2>
-                
-                <h3>Historial de Solicitudes (Agenda)</h3>
-                <table border="1" width="100%" style="margin-bottom: 20px; text-align: left; border-collapse: collapse;">
-                    <tr style="background: #333;"><th>Sala</th><th>Fecha</th><th>Precio</th><th>Ins. Extra</th></tr>
-                    ${(datos.reservas || []).sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).map(r => `
-                        <tr>
-                            <td>${r.sala || '-'}</td>
-                            <td>${r.fecha || '-'}</td>
-                            <td>$${r.total || r.precio || 0}</td>
-                            <td>${(r.extras || r.insExtra || []).join(", ") || "-"}</td>
-                        </tr>
-                    `).join("")}
-                </table>
-
-                <h3>Lista de Salas</h3>
-                <table border="1" width="100%" style="margin-bottom: 20px; text-align: left; border-collapse: collapse;">
-                    <tr style="background: #333;"><th>Sala</th><th>Estado</th><th>Precio Fijo</th></tr>
-                    ${(datos.salas || []).map(s => `
-                        <tr><td>${s.nombre}</td><td>${s.estado}</td><td>$${s.precioFijo}</td></tr>
-                    `).join("")}
-                </table>
-
-                <h3>Historial de Instrumentos Extra Disponibles</h3>
-                <table border="1" width="100%" style="text-align: left; border-collapse: collapse;">
-                    <tr style="background: #333;"><th>Instrumento</th><th>Cantidad Disponible</th></tr>
-                    ${(datos.inventario || []).map(i => `
-                        <tr><td>${i.tipo}</td><td>${i.cantidadTotal - i.enUso}</td></tr>
-                    `).join("")}
-                </table>
-            </section>
-        `;
-    }
-
-    // Panel del ENCARGADO (Modificable)
-    if (usuario.rol === "encargado") {
-        mainContenedor.innerHTML = `
-            <section style="padding: 20px;">
-                <h2>Panel Operativo (Encargado)</h2>
-                
-                <h3>Lista de Salas (Modificable en estado)</h3>
-                <table border="1" width="100%" style="margin-bottom: 20px; text-align: left; border-collapse: collapse;">
-                    <tr style="background: #333;"><th>Sala</th><th>Estado actual</th><th>Acción</th></tr>
-                    ${(datos.salas || []).map((s, index) => `
-                        <tr>
-                            <td>${s.nombre}</td>
-                            <td>${s.estado}</td>
-                            <td>
-                                <select onchange="cambiarEstadoSala(${index}, this.value)" style="background: #222; color: #fff; padding: 5px;">
-                                    <option value="Disponible" ${s.estado === 'Disponible' ? 'selected' : ''}>Disponible</option>
-                                    <option value="Mantenimiento" ${s.estado === 'Mantenimiento' ? 'selected' : ''}>Mantenimiento</option>
-                                </select>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </table>
-
-                <h3>Historial de Inventario (Modificable)</h3>
-                <table border="1" width="100%" style="text-align: left; border-collapse: collapse;">
-                    <tr style="background: #333;"><th>Tipo Ins.</th><th>Cantidad Total</th><th>En Uso</th><th>Acción (En Uso)</th></tr>
-                    ${(datos.inventario || []).map((i, index) => `
-                        <tr>
-                            <td>${i.tipo}</td>
-                            <td>${i.cantidadTotal}</td>
-                            <td>${i.enUso}</td>
-                            <td>
-                                <button onclick="modificarInventario(${index}, 1)" style="background: #39ff14; color: #000; cursor: pointer; padding: 2px 8px;">+ Uso</button>
-                                <button onclick="modificarInventario(${index}, -1)" style="background: #ff3939; color: #fff; cursor: pointer; padding: 2px 8px;">- Uso</button>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </table>
-            </section>
-        `;
-    }
-}
-
-// Funciones globales para el Encargado
-window.cambiarEstadoSala = function(indexSala, nuevoEstado) {
-    const datos = obtenerDatosApp();
-    datos.salas[indexSala].estado = nuevoEstado;
-    guardarDatosApp(datos);
-    renderizarVistaPorRol(obtenerUsuarioSesion());
-};
-
-window.modificarInventario = function(indexInv, modificador) {
-    const datos = obtenerDatosApp();
-    const item = datos.inventario[indexInv];
-    
-    let nuevoUso = item.enUso + modificador;
-    if (nuevoUso >= 0 && nuevoUso <= item.cantidadTotal) {
-        item.enUso = nuevoUso;
-        guardarDatosApp(datos);
-        renderizarVistaPorRol(obtenerUsuarioSesion());
-    } else {
-        alert("Operación inválida: excede la cantidad disponible.");
-    }
-};
-
-// 4. Renderizado de "Mis Reservas"
-function cargarMisReservas() {
-    const contenedor = document.getElementById("lista-reservas");
-    if (!contenedor) return;
-
-    const usuario = obtenerUsuarioSesion();
-    const datos = obtenerDatosApp();
-
-    if (!usuario || usuario.rol !== "musico") {
-        contenedor.innerHTML = `
-            <div style="border: 1px dashed #ff3939; padding: 20px; border-radius: 5px; text-align: center;">
-                <p>Inicia sesión como Músico para visualizar y gestionar tus turnos de ensayo.</p>
-            </div>
-        `;
-        return;
-    }
-
-    const misReservas = datos.reservas.filter(r => r.usuarioId === usuario.id);
-
-    if (misReservas.length === 0) {
-        contenedor.innerHTML = "<p>No posees reservas registradas en el sistema.</p>";
-        return;
-    }
-
-    contenedor.innerHTML = misReservas.map(reserva => `
-        <article style="border: 1px solid ${reserva.estado === 'Confirmada' ? '#39ff14' : '#555'}; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #1e1e1e;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="color: ${reserva.estado === 'Confirmada' ? '#39ff14' : '#fff'}; margin: 0;">${reserva.sala}</h3>
-                <span style="padding: 3px 8px; border-radius: 3px; font-size: 0.8rem; background-color: ${reserva.estado === 'Confirmada' ? '#1b4311' : '#333'}; color: ${reserva.estado === 'Confirmada' ? '#39ff14' : '#aaa'};">${reserva.estado}</span>
-            </div>
-            <p style="margin: 8px 0;"><strong>Fecha y Hora:</strong> ${reserva.fecha} - ${reserva.hora} hs (${reserva.duracion} hs)</p>
-            <p style="margin: 8px 0; color: #aaa;"><strong>Equipamiento extra:</strong> ${reserva.extras && reserva.extras.length > 0 ? reserva.extras.join(", ") : "Sin adicionales"}</p>
-            <p style="margin: 8px 0; color: #39ff14;"><strong>Total:</strong> $${reserva.total || 0}</p>
-            ${reserva.estado === "Confirmada" ? `
-                <button onclick="cancelarTurno(${reserva.id})" style="background-color: transparent; border: 1px solid #ff3939; color: #ff3939; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-top: 5px;">Cancelar Turno</button>
-            ` : ""}
-        </article>
-    `).join("");
-}
-
-window.cancelarTurno = function(idReserva) {
-    if (confirm("¿Confirmas la cancelación de este ensayo?")) {
-        const datos = obtenerDatosApp();
-        const index = datos.reservas.findIndex(r => r.id === idReserva);
-        if (index !== -1) {
-            datos.reservas[index].estado = "Cancelada";
-            guardarDatosApp(datos);
-            cargarMisReservas();
-        }
-    }
-};
-
-// 5. Formulario de Reserva
-function configurarFormularioReserva() {
-    const form = document.getElementById("form-reserva");
-    const selectSala = document.getElementById("sala");
-    const inputDuracion = document.getElementById("duracion");
-    const visorTotal = document.getElementById("total-estimado");
-
-    const precios = { standard: 3500, premium: 5500, bateria: 4000 };
-
-    function recalcularPrecio() {
-        const salaKey = selectSala.value;
-        const hs = parseInt(inputDuracion.value) || 1;
-        let total = (precios[salaKey] || 0) * hs;
-
-        const extrasCount = document.querySelectorAll('input[name="extras"]:checked').length;
-        total += extrasCount * 500 * hs;
-
-        if (visorTotal) visorTotal.textContent = total > 0 ? `$${total} ARS` : "$0 ARS";
-        return total;
-    }
-
-    selectSala?.addEventListener("change", recalcularPrecio);
-    inputDuracion?.addEventListener("input", recalcularPrecio);
-    document.querySelectorAll('input[name="extras"]').forEach(c => c.addEventListener("change", recalcularPrecio));
-
-    form?.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const usuario = obtenerUsuarioSesion();
-
-        if (!usuario || usuario.rol !== "musico") {
-            alert("Debes iniciar sesión como Músico para realizar una reserva.");
-            document.getElementById("modal-login")?.classList.add("activo");
+        if (!usuario) {
+            alert("Usuario o contraseña incorrectos.");
             return;
         }
 
-        const salaTexto = selectSala.options[selectSala.selectedIndex].text;
-        const extrasSeleccionados = [];
-        document.querySelectorAll('input[name="extras"]:checked').forEach(cb => {
-            const label = document.querySelector(`label[for="${cb.id}"]`);
-            if (label) extrasSeleccionados.push(label.textContent);
+        localStorage.setItem("groovespace_usuario_activo", JSON.stringify(usuario));
+        if (modal) modal.classList.remove("activo");
+        actualizarUsuario();
+        mostrarSalas();
+        mostrarMisReservas();
+    };
+}
+
+function actualizarUsuario() {
+    const usuario = obtenerUsuario();
+    const contenedor = document.getElementById("contenedor-usuario-nav");
+    const titulo = document.getElementById("titulo-bienvenida");
+
+    if (contenedor) {
+        contenedor.innerHTML = "";
+        if (usuario) {
+            const nombre = document.createElement("span");
+            nombre.textContent = usuario.nombre + " (" + usuario.rol + ")";
+            const salir = document.createElement("button");
+            salir.className = "btn-salir";
+            salir.textContent = "Cerrar sesión";
+            salir.onclick = function() {
+                localStorage.removeItem("groovespace_usuario_activo");
+                location.href = location.pathname.includes("/pages/") ? "../index.html" : "index.html";
+            };
+            contenedor.append(nombre, salir);
+        } else {
+            const entrar = document.createElement("button");
+            entrar.id = "btn-login-nav";
+            entrar.textContent = "Iniciar sesión";
+            if (!document.getElementById("modal-login")) entrar.onclick = function() { location.href = "../index.html"; };
+            contenedor.append(entrar);
+        }
+    }
+
+    if (titulo) titulo.textContent = usuario ? "Bienvenido a GrooveSpace, " + usuario.nombre : "Bienvenido a GrooveSpace";
+    if (usuario && usuario.rol !== "musico") mostrarPanel(usuario);
+}
+
+function mostrarSalas() {
+    const lista = document.getElementById("lista-salas");
+    if (!lista) return;
+
+    const salas = obtenerDatos().salas;
+    lista.innerHTML = salas.map(sala =>
+        '<article class="tarjeta"><h3>' + sala.nombre + '</h3><p>Estado: ' + sala.estado +
+        '</p><p>Desde $' + sala.precioFijo + ' por hora</p></article>'
+    ).join("");
+
+    if (!salas.length) lista.textContent = "No hay salas para mostrar.";
+}
+
+function crearTabla(titulos, filas) {
+    const encabezado = titulos.map(titulo => "<th>" + titulo + "</th>").join("");
+    const cuerpo = filas.map(fila =>
+        "<tr>" + fila.map(valor => "<td>" + valor + "</td>").join("") + "</tr>"
+    ).join("");
+
+    return '<table class="tabla-panel"><thead><tr>' + encabezado +
+        "</tr></thead><tbody>" + cuerpo + "</tbody></table>";
+}
+
+function mostrarPanel(usuario) {
+    const principal = document.querySelector("main");
+    const menu = document.querySelector("nav ul");
+    const datos = obtenerDatos();
+    if (!principal) return;
+    if (menu) menu.style.display = "none";
+
+    if (usuario.rol === "dueño") {
+        const reservas = datos.reservas.map(reserva => {
+            const cliente = datos.usuarios.find(item => item.id === reserva.usuarioId);
+            const sala = datos.salas.find(item => item.id === reserva.salaId);
+            return [
+                cliente ? cliente.nombre : "Usuario",
+                reserva.sala || (sala ? sala.nombre : "Sala"),
+                reserva.fecha || "",
+                "$" + (reserva.total || reserva.precio || 0),
+                extrasComoTexto(reserva.extras || reserva.insExtra, datos)
+            ];
+        });
+    if (!reservas.length) reservas.push(["No hay reservas.", "", "", "", ""]);
+
+        const salas = datos.salas.map(sala => [sala.nombre, sala.estado, "$" + sala.precioFijo]);
+        const inventario = datos.inventario.map(item => [item.tipo, item.cantidadTotal - item.enUso]);
+
+        principal.innerHTML = "<section><h1>Panel gerencial</h1><h2>Reservas registradas</h2>" +
+            crearTabla(["Usuario", "Sala", "Fecha", "Total", "Adicionales"], reservas) +
+            "<h2>Salas</h2>" + crearTabla(["Sala", "Estado", "Precio por hora"], salas) +
+            "<h2>Equipamiento</h2>" + crearTabla(["Artículo", "Disponible"], inventario) + "</section>";
+    }
+
+    if (usuario.rol === "encargado") {
+        const salas = datos.salas.map(sala => [
+            sala.nombre,
+            sala.estado,
+            '<select aria-label="Estado de ' + sala.nombre + '" onchange="cambiarEstadoSala(\'' + sala.id + '\', this.value)">' +
+                '<option value="Disponible" ' + (sala.estado === "Disponible" ? "selected" : "") + '>Disponible</option>' +
+                '<option value="Mantenimiento" ' + (sala.estado === "Mantenimiento" ? "selected" : "") + '>Mantenimiento</option>' +
+            "</select>"
+        ]);
+
+        const inventario = datos.inventario.map(item => [
+            item.tipo,
+            item.cantidadTotal,
+            item.enUso,
+            '<button onclick="modificarInventario(\'' + item.id + '\', 1)">+ Uso</button> ' +
+            '<button onclick="modificarInventario(\'' + item.id + '\', -1)">- Uso</button>'
+        ]);
+
+        principal.innerHTML = "<section><h1>Panel operativo</h1><h2>Estado de las salas</h2>" +
+            crearTabla(["Sala", "Estado", "Actualizar"], salas) +
+            "<h2>Inventario</h2>" +
+            crearTabla(["Artículo", "Total", "En uso", "Acciones"], inventario) + "</section>";
+    }
+}
+
+function extrasComoTexto(extras, datos) {
+    if (!extras) return "Sin adicionales";
+    return extras.map(extra => {
+        const item = datos.inventario.find(inventario => inventario.id === extra);
+        return item ? item.tipo : extra;
+    }).join(", ") || "Sin adicionales";
+}
+
+window.cambiarEstadoSala = function(id, estado) {
+    const datos = obtenerDatos();
+    const sala = datos.salas.find(item => item.id === id);
+    if (!sala) return;
+    sala.estado = estado;
+    guardarDatos(datos);
+    mostrarPanel(obtenerUsuario());
+    mostrarSalas();
+};
+
+window.modificarInventario = function(id, cambio) {
+    const datos = obtenerDatos();
+    const item = datos.inventario.find(inventario => inventario.id === id);
+    if (!item) return;
+
+    const uso = item.enUso + cambio;
+    if (uso < 0 || uso > item.cantidadTotal) {
+        alert("La cantidad debe estar entre cero y el total.");
+        return;
+    }
+
+    item.enUso = uso;
+    guardarDatos(datos);
+    mostrarPanel(obtenerUsuario());
+};
+
+function cargarSalas() {
+    const select = document.getElementById("sala");
+    const extras = document.getElementById("lista-extras");
+    if (!select) return;
+
+    const datos = obtenerDatos();
+    select.innerHTML = "<option value=''>Selecciona una sala...</option>";
+    datos.salas.forEach(sala => {
+        const opcion = document.createElement("option");
+        opcion.value = sala.id;
+        opcion.textContent = sala.nombre + " — $" + sala.precioFijo + "/hora";
+        opcion.disabled = sala.estado !== "Disponible";
+        select.append(opcion);
+    });
+
+    if (!extras) return;
+    extras.innerHTML = "";
+    datos.inventario.forEach(item => {
+        const disponibles = item.cantidadTotal - item.enUso;
+        const etiqueta = document.createElement("label");
+        const casilla = document.createElement("input");
+        casilla.type = "checkbox";
+        casilla.name = "extras";
+        casilla.value = item.id;
+        casilla.disabled = disponibles < 1;
+        etiqueta.append(casilla, document.createTextNode(" " + item.tipo + " ($" +
+            item.precioHora + "/hora, " + disponibles + " disponibles)"));
+        extras.append(etiqueta);
+    });
+}
+
+function configurarReserva() {
+    const formulario = document.getElementById("form-reserva");
+    const select = document.getElementById("sala");
+    const duracion = document.getElementById("duracion");
+    const total = document.getElementById("total-estimado");
+    if (!formulario || !select || !duracion) return;
+
+    function calcularTotal() {
+        const datos = obtenerDatos();
+        const sala = datos.salas.find(item => item.id === select.value);
+        const extras = document.querySelectorAll("input[name='extras']:checked");
+        let precioExtras = 0;
+        extras.forEach(casilla => {
+            const item = datos.inventario.find(inventario => inventario.id === casilla.value);
+            if (item) precioExtras += item.precioHora;
         });
 
-        const nuevaReserva = {
+        const horas = Number(duracion.value) || 0;
+        const importe = sala && sala.estado === "Disponible"
+            ? (sala.precioFijo + precioExtras) * horas
+            : 0;
+        if (total) total.textContent = "$" + importe + " ARS";
+        return importe;
+    }
+
+    formulario.addEventListener("input", calcularTotal);
+    formulario.addEventListener("change", calcularTotal);
+    formulario.onsubmit = function(event) {
+        event.preventDefault();
+        const usuario = obtenerUsuario();
+        if (!usuario || usuario.rol !== "musico") {
+            alert("Inicia sesión como músico desde la página de Inicio para solicitar una reserva.");
+            location.href = "../index.html";
+            return;
+        }
+
+        const datos = obtenerDatos();
+        const sala = datos.salas.find(item => item.id === select.value);
+        const importe = calcularTotal();
+        if (!sala || sala.estado !== "Disponible" || !importe) {
+            alert("Selecciona una sala disponible y una duración válida.");
+            return;
+        }
+
+        const extras = [];
+        document.querySelectorAll("input[name='extras']:checked").forEach(casilla => extras.push(casilla.value));
+        const reserva = {
             id: Date.now(),
             usuarioId: usuario.id,
-            sala: salaTexto,
+            salaId: sala.id,
+            sala: sala.nombre,
             fecha: document.getElementById("fecha").value,
             hora: document.getElementById("hora").value,
-            duracion: parseInt(inputDuracion.value),
-            extras: extrasSeleccionados,
+            duracion: Number(duracion.value),
+            extras: extras,
             estado: "Confirmada",
-            total: recalcularPrecio()
+            total: importe
         };
 
-        const datos = obtenerDatosApp();
-        datos.reservas.push(nuevaReserva);
-        guardarDatosApp(datos);
+        datos.reservas.push(reserva);
+        guardarDatos(datos);
+        location.href = "confirmacion.html?id=" + reserva.id;
+    };
+}
 
-        alert("¡Turno registrado exitosamente!");
-        window.location.href = "mis-reservas.html";
+function mostrarMisReservas() {
+    const lista = document.getElementById("lista-reservas");
+    if (!lista) return;
+
+    const resumen = document.getElementById("resumen-reservas");
+    const usuario = obtenerUsuario();
+    const datos = obtenerDatos();
+    if (!usuario || usuario.rol !== "musico") {
+        const mensaje = "Inicia sesión como músico para consultar tus reservas.";
+        if (resumen) resumen.textContent = mensaje;
+        lista.textContent = mensaje;
+        return;
+    }
+
+    const reservas = datos.reservas.filter(reserva => reserva.usuarioId === usuario.id)
+        .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
+    const hoy = new Date();
+    const fechaHoy = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") +
+        "-" + String(hoy.getDate()).padStart(2, "0");
+    const proximas = reservas.filter(reserva =>
+        (reserva.estado || "Confirmada") === "Confirmada" && reserva.fecha >= fechaHoy
+    );
+
+    if (resumen) resumen.textContent = reservas.length + " reserva(s) en total · " + proximas.length + " próxima(s)";
+    lista.innerHTML = "";
+
+    if (!reservas.length) {
+        lista.textContent = "Todavía no tienes reservas registradas.";
+        return;
+    }
+
+    reservas.forEach(reserva => {
+        const sala = datos.salas.find(item => item.id === reserva.salaId);
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "tarjeta";
+        tarjeta.innerHTML = "<h2>" + (reserva.sala || (sala ? sala.nombre : "Sala")) + "</h2>" +
+            "<p>" + formatearFecha(reserva.fecha) + " a las " + (reserva.hora || "18:00") +
+            " hs, " + (reserva.duracion || 1) + " hora(s)</p>" +
+            "<p>Equipamiento extra: " + extrasComoTexto(reserva.extras || reserva.insExtra, datos) + "</p>" +
+            "<p>Total: $" + (reserva.total || reserva.precio || 0) + "</p>" +
+            "<p>Estado: " + (reserva.estado || "Confirmada") + "</p>";
+
+        if (!reserva.estado || reserva.estado === "Confirmada") {
+            const cancelar = document.createElement("button");
+            cancelar.textContent = "Cancelar turno";
+            cancelar.onclick = function() { cancelarTurno(reserva.id); };
+            tarjeta.append(cancelar);
+        }
+        lista.append(tarjeta);
     });
+}
+
+function cancelarTurno(id) {
+    if (!confirm("¿Confirmas la cancelación de este ensayo?")) return;
+    const datos = obtenerDatos();
+    const reserva = datos.reservas.find(item => item.id === id);
+    if (!reserva) return;
+    reserva.estado = "Cancelada";
+    guardarDatos(datos);
+    mostrarMisReservas();
+}
+
+function mostrarConfirmacion() {
+    const detalle = document.getElementById("detalle-reserva");
+    if (!detalle) return;
+
+    const usuario = obtenerUsuario();
+    const datos = obtenerDatos();
+    const id = Number(new URLSearchParams(location.search).get("id"));
+    const reserva = datos.reservas.find(item => item.id === id && usuario && item.usuarioId === usuario.id);
+    if (!reserva) {
+        detalle.textContent = "No encontramos una reserva para mostrar.";
+        return;
+    }
+
+    const sala = datos.salas.find(item => item.id === reserva.salaId);
+    document.getElementById("detalle-sala").textContent = sala ? sala.nombre : reserva.sala;
+    document.getElementById("detalle-fecha").textContent = formatearFecha(reserva.fecha);
+    document.getElementById("detalle-horario").textContent =
+        (reserva.hora || "18:00") + " hs, por " + (reserva.duracion || 1) + " hora(s)";
+    document.getElementById("detalle-extras").textContent = extrasComoTexto(reserva.extras || reserva.insExtra, datos);
+    document.getElementById("detalle-total").textContent = "$" + (reserva.total || reserva.precio || 0) + " ARS";
+}
+
+function formatearFecha(fecha) {
+    if (!fecha) return "Fecha pendiente";
+    return new Intl.DateTimeFormat("es-AR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    }).format(new Date(fecha + "T12:00:00"));
 }
