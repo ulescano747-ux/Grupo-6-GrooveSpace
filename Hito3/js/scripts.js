@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", iniciar);
 
 async function iniciar() {
     await cargarDatos();
+    crearModalLogin();
     configurarLogin();
     ponerFechaMinima();
     actualizarPantalla();
@@ -12,6 +13,18 @@ async function iniciar() {
     window.addEventListener("storage", function(event) {
         if (event.key === CLAVE_DATOS) actualizarPantalla();
     });
+}
+
+function crearModalLogin() {
+    if (document.getElementById("modal-login")) return;
+    document.body.insertAdjacentHTML("beforeend",
+        '<div id="modal-login" class="modal-login"><div class="modal-contenido">' +
+        '<button id="btn-cerrar-modal" class="btn-cerrar-modal" type="button" aria-label="Cerrar">×</button>' +
+        '<h2>Iniciar sesión</h2><form id="form-login">' +
+        '<label for="login-user">Usuario</label><input id="login-user" type="text" required>' +
+        '<label for="login-pass">Contraseña</label><input id="login-pass" type="password" required>' +
+        '<button type="submit">Ingresar</button></form></div></div>'
+    );
 }
 
 async function cargarDatos() {
@@ -163,7 +176,9 @@ function actualizarMenu() {
         const entrar = document.createElement("button");
         entrar.id = "btn-login-nav";
         entrar.textContent = "Iniciar sesión";
-        if (!document.getElementById("modal-login")) entrar.onclick = function() { location.href = "../index.html"; };
+        entrar.onclick = function() {
+            document.getElementById("modal-login").classList.add("activo");
+        };
         contenedor.append(entrar);
         configurarLogin();
         return;
