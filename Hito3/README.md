@@ -1,25 +1,17 @@
 # Grupo 6 - GrooveSpace
 
-## Hito 3
+## Hito 3.2
 
-Plataforma de reservas de salas de ensayo. Los datos iniciales se cargan desde `data/datos.json` y los cambios de la sesión se guardan en el navegador.
+Sistema de reservas para salas de ensayo. La aplicación carga sus datos desde `data/datos.json` y guarda los cambios de prueba en el navegador.
 
-Para usar la aplicación, abre la carpeta con un servidor local y entra a `index.html`. La carga de datos requiere `fetch`, por lo que no funciona al abrir el archivo directamente.
+Para abrirla, inicia un servidor local en esta carpeta y entra a `index.html`. La carga de datos usa `fetch`, por eso no funciona al abrir el HTML directamente.
 
-## Cuentas de prueba
+Las cuentas de prueba tienen la contraseña `123`:
+- `musico1` y `musico2`: músicos
+- `staff` y `staff2`: encargados
+- `jefe` y `duena`: dueños
 
-La contraseña de todas las cuentas es `123`.
+Las reservas se sincronizan entre pestañas del mismo navegador mediante `localStorage`. La demostración no sincroniza datos entre dispositivos.
 
-| Usuario | Rol |
-| --- | --- |
-| musico1 | Músico |
-| musico2 | Músico |
-| jefe | Dueño |
-| duena | Dueño |
-| staff | Encargado |
-| staff2 | Encargado |
-
-## Autor
-
-Uriel Joel Lescano Coleandro  
+Autor: Uriel Joel Lescano Coleandro  
 GitHub: [ulescano747-ux](https://github.com/ulescano747-ux)
