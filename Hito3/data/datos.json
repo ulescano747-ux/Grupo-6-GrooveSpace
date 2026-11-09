@@ -1,4 +1,7 @@
 {
+  "politicaCancelacion": {
+    "horasAnticipacion": 24
+  },
   "usuarios": [
     { "id": 1, "username": "musico1", "nombre": "Lucas", "rol": "musico", "password": "123" },
     { "id": 2, "username": "musico2", "nombre": "Valentina", "rol": "musico", "password": "123" },
@@ -8,19 +11,20 @@
     { "id": 6, "username": "staff2", "nombre": "Diego", "rol": "encargado", "password": "123" }
   ],
   "salas": [
-    { "id": "standard", "nombre": "Sala Standard", "estado": "Disponible", "precioFijo": 3500 },
-    { "id": "premium", "nombre": "Sala Premium", "estado": "Disponible", "precioFijo": 5500 },
-    { "id": "bateria", "nombre": "Sala de Batería", "estado": "Mantenimiento", "precioFijo": 4000 }
+    { "id": "standard", "nombre": "Sala Standard", "estado": "Liberada", "precioFijo": 3500 },
+    { "id": "premium", "nombre": "Sala Premium", "estado": "Liberada", "precioFijo": 5500 },
+    { "id": "bateria", "nombre": "Sala de Batería", "estado": "En mantenimiento", "precioFijo": 4000 }
   ],
   "inventario": [
     { "id": "i1", "tipo": "Guitarra eléctrica", "cantidadTotal": 3, "enUso": 1, "precioHora": 500 },
     { "id": "i2", "tipo": "Pedalera de efectos", "cantidadTotal": 2, "enUso": 0, "precioHora": 500 },
-    { "id": "i3", "tipo": "Set de platillos", "cantidadTotal": 4, "enUso": 2, "precioHora": 500 }
+    { "id": "i3", "tipo": "Set de platillos", "cantidadTotal": 4, "enUso": 2, "precioHora": 500 },
+    { "id": "i4", "tipo": "Amplificador", "cantidadTotal": 3, "enUso": 1, "precioHora": 800 }
   ],
   "reservas": [
-    { "id": 101, "usuarioId": 1, "salaId": "premium", "fecha": "2026-11-03", "hora": "18:00", "duracion": 2, "extras": ["i2"], "estado": "Confirmada", "total": 12000 },
-    { "id": 102, "usuarioId": 1, "salaId": "standard", "fecha": "2026-11-10", "hora": "19:00", "duracion": 2, "extras": ["i1"], "estado": "Confirmada", "total": 8000 },
-    { "id": 103, "usuarioId": 2, "salaId": "standard", "fecha": "2026-11-05", "hora": "17:00", "duracion": 1, "extras": ["i3"], "estado": "Confirmada", "total": 4000 },
-    { "id": 104, "usuarioId": 2, "salaId": "premium", "fecha": "2026-11-12", "hora": "20:00", "duracion": 3, "extras": [], "estado": "Confirmada", "total": 16500 }
+    { "id": 101, "usuarioId": 1, "salaId": "premium", "fecha": "2026-11-03", "hora": "18:00", "duracion": 2, "extras": ["i2"], "estado": "Finalizada", "demora": false, "total": 12000 },
+    { "id": 102, "usuarioId": 1, "salaId": "standard", "fecha": "2026-11-10", "hora": "19:00", "duracion": 2, "extras": ["i1"], "estado": "Confirmada", "demora": false, "total": 8000 },
+    { "id": 103, "usuarioId": 2, "salaId": "standard", "fecha": "2026-11-05", "hora": "17:00", "duracion": 1, "extras": ["i3"], "estado": "Finalizada", "demora": false, "total": 4000 },
+    { "id": 104, "usuarioId": 2, "salaId": "premium", "fecha": "2026-11-12", "hora": "20:00", "duracion": 3, "extras": ["i4"], "estado": "Confirmada", "demora": false, "total": 18900 }
   ]
 }
