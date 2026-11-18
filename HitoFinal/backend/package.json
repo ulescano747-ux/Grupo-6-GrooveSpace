@@ -1,0 +1,12 @@
+{
+  "name": "groovespace-backend",
+  "version": "1.0.0",
+  "description": "API para la plataforma GrooveSpace",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
