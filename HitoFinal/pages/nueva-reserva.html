@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrooveSpace - Solicitar turno</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/scripts.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="nueva-reserva.html">Solicitar turno</a></li>
+                <li><a href="mis-reservas.html">Mis reservas</a></li>
+            </ul>
+            <div id="contenedor-usuario-nav"></div>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h1>Solicitar una sala</h1>
+            <p>Elegí una sala liberada, el día y el horario de tu ensayo. El sistema revisa que no haya otra reserva en ese horario.</p>
+
+            <form id="form-reserva" class="form-reserva" action="confirmacion.html">
+                <label for="sala">Tipo de sala</label>
+                <select id="sala" name="sala" required>
+                    <option value="">Cargando salas...</option>
+                </select>
+
+                <label for="fecha">Fecha del ensayo</label>
+                <input type="date" id="fecha" name="fecha" required>
+
+                <label for="hora">Horario de inicio</label>
+                <input type="time" id="hora" name="hora" required>
+
+                <label for="duracion">Duración (horas)</label>
+                <input type="number" id="duracion" name="duracion" min="1" max="6" value="1" required>
+
+                <fieldset>
+                    <legend>Equipamiento extra</legend>
+                    <div id="lista-extras">Cargando equipamiento...</div>
+                </fieldset>
+
+                <p>Total estimado: <strong id="total-estimado">$0 ARS</strong></p>
+                <button type="submit">Confirmar reserva</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 GrooveSpace - Plataforma de reservas acústicas.</p>
+    </footer>
+</body>
+</html>
