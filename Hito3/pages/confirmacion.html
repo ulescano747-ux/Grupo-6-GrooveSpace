@@ -3,42 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GrooveSpace - Pase Digital</title>
+    <title>GrooveSpace - Reserva confirmada</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/scripts.js" defer></script>
 </head>
 <body>
     <header>
         <nav>
             <ul>
                 <li><a href="../index.html">Inicio</a></li>
-                <li><a href="nueva-reserva.html">Solicitar Turno</a></li>
-                <li><a href="mis-reservas.html">Mis Reservas</a></li>
+                <li><a href="nueva-reserva.html">Solicitar turno</a></li>
+                <li><a href="mis-reservas.html">Mis reservas</a></li>
             </ul>
+            <div id="contenedor-usuario-nav"></div>
         </nav>
     </header>
 
     <main>
-        <section class="pase-digital">
-            <h2>¡Reserva Confirmada con Éxito!</h2>
-            <p>Tu turno ha sido registrado en el sistema. Este es tu pase digital.</p>
-            
-            <article style="text-align: left; margin-top: 20px; background-color: #2c2c2c; padding: 15px; border-radius: 5px;">
-                <h3>Detalle de la reserva:</h3>
-                <ul>
-                    <li><strong>Sala asignada:</strong> Sala Premium (Sala 3)</li>
-                    <li><strong>Fecha:</strong> Viernes 14 de Agosto, 2026</li>
-                    <li><strong>Horario:</strong> 18:00 hs - 20:00 hs</li>
-                    <li><strong>Equipamiento incluido:</strong> Batería base, 2 Amplificadores.</li>
-                    <li><strong>Alquiler extra:</strong> Pedalera de efectos.</li>
-                </ul>
+        <section>
+            <h1>Reserva confirmada</h1>
+            <p>Guardamos la reserva en tu cuenta. Este es el detalle del ensayo:</p>
+            <article id="detalle-reserva" class="tarjeta">
+                <p><strong>Sala:</strong> <span id="detalle-sala"></span></p>
+                <p><strong>Fecha:</strong> <span id="detalle-fecha"></span></p>
+                <p><strong>Horario:</strong> <span id="detalle-horario"></span></p>
+                <p><strong>Equipamiento extra:</strong> <span id="detalle-extras"></span></p>
+                <p><strong>Total:</strong> <span id="detalle-total"></span></p>
             </article>
-            
-            <a href="mis-reservas.html"><button class="btn-neon" style="margin-top: 20px;">Ver mi historial de ensayos</button></a>
+            <p><a class="btn-neon" href="mis-reservas.html">Ver mis reservas</a></p>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2026 GrooveSpace - Plataforma de Reservas Acústicas.</p>
+        <p>&copy; 2026 GrooveSpace - Plataforma de reservas acústicas.</p>
     </footer>
 </body>
 </html>

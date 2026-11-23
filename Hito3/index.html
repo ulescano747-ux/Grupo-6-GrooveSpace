@@ -9,55 +9,47 @@
 </head>
 <body>
     <header>
-        <nav style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
-            <ul style="display: flex; list-style: none; gap: 15px; margin: 0; padding: 0;">
+        <nav>
+            <ul>
                 <li><a href="index.html">Inicio</a></li>
-                <li><a href="pages/nueva-reserva.html">Solicitar Turno</a></li>
-                <li><a href="pages/mis-reservas.html">Mis Reservas</a></li>
+                <li><a href="pages/nueva-reserva.html">Solicitar turno</a></li>
+                <li><a href="pages/mis-reservas.html">Mis reservas</a></li>
             </ul>
-            <div id="contenedor-usuario-nav">
-                <!-- Se llena con JS -->
-            </div>
+            <div id="contenedor-usuario-nav"></div>
         </nav>
     </header>
 
     <main>
         <section>
             <h1 id="titulo-bienvenida">Bienvenido a GrooveSpace</h1>
-            <p>El polo cultural para tu banda. Asegura tu lugar para practicar de manera rápida y 100% digital, sin intermediarios ni superposiciones.</p>
+            <p>El polo cultural para tu banda. Reserva una sala de ensayo y organiza tu próximo encuentro desde un solo lugar.</p>
+            <p><a class="btn-neon" href="pages/nueva-reserva.html">Solicitar un turno</a></p>
         </section>
 
-        <section>
-            <article>
-                <h2>Salas Acústicas Profesionales</h2>
-                <p>Contamos con Salas Standard, Premium y Salas exclusivas para Batería. Gestiona tu espacio en tiempo real y abona tus extras desde la plataforma.</p>
-            </article>
+        <section aria-labelledby="titulo-salas">
+            <h2 id="titulo-salas">Nuestras salas</h2>
+            <div id="lista-salas" class="lista-salas">
+                <p>Cargando salas...</p>
+            </div>
         </section>
     </main>
 
-    <!-- Inicio de Sesión -->
-    <div id="modal-login" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center;">
-        <div style="background: #222; padding: 25px; border-radius: 8px; border: 1px solid #39ff14; min-width: 300px; position: relative;">
-            <span id="btn-cerrar-modal" style="position: absolute; right: 15px; top: 10px; cursor: pointer; color: #ff3939; font-weight: bold;">✕</span>
-            <h3 style="color: #39ff14; margin-top: 0;">Iniciar Sesión</h3>
+    <div id="modal-login" class="modal-login">
+        <div class="modal-contenido">
+            <button id="btn-cerrar-modal" class="btn-cerrar-modal" type="button" aria-label="Cerrar">×</button>
+            <h2>Iniciar sesión</h2>
             <form id="form-login">
-                <label style="display: block; margin-top: 10px;">Usuario:</label>
-                <input type="text" id="login-user" required style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
-                
-                <label style="display: block; margin-top: 10px;">Contraseña:</label>
-                <input type="password" id="login-pass" required style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
-                
-                <button type="submit" style="margin-top: 15px; width: 100%; padding: 10px; background: #39ff14; color: #000; border: none; font-weight: bold; cursor: pointer;">Ingresar</button>
+                <label for="login-user">Usuario</label>
+                <input type="text" id="login-user" required>
+                <label for="login-pass">Contraseña</label>
+                <input type="password" id="login-pass" required>
+                <button type="submit">Ingresar</button>
             </form>
         </div>
     </div>
 
-    <style>
-        #modal-login.activo { display: flex !important; }
-    </style>
-
     <footer>
-        <p>&copy; 2026 GrooveSpace - Plataforma de Reservas Acústicas.</p>
+        <p>&copy; 2026 GrooveSpace - Plataforma de reservas acústicas.</p>
     </footer>
 </body>
 </html>

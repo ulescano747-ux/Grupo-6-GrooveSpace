@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrooveSpace - Inicio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/scripts.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="pages/nueva-reserva.html">Solicitar turno</a></li>
+                <li><a href="pages/mis-reservas.html">Mis reservas</a></li>
+            </ul>
+            <div id="contenedor-usuario-nav"></div>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h1 id="titulo-bienvenida">Bienvenido a GrooveSpace</h1>
+            <p>El polo cultural para tu banda. Reserva una sala de ensayo y organiza tu próximo encuentro desde un solo lugar.</p>
+            <p><a class="btn-neon" href="pages/nueva-reserva.html">Solicitar un turno</a></p>
+        </section>
+
+        <section aria-labelledby="titulo-salas">
+            <h2 id="titulo-salas">Nuestras salas</h2>
+            <div id="lista-salas" class="lista-salas">
+                <p>Cargando salas...</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-login" class="modal-login">
+        <div class="modal-contenido">
+            <button id="btn-cerrar-modal" class="btn-cerrar-modal" type="button" aria-label="Cerrar">×</button>
+            <h2>Iniciar sesión</h2>
+            <form id="form-login">
+                <label for="login-user">Usuario</label>
+                <input type="text" id="login-user" required>
+                <label for="login-pass">Contraseña</label>
+                <input type="password" id="login-pass" required>
+                <button type="submit">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 GrooveSpace - Plataforma de reservas acústicas.</p>
+    </footer>
+</body>
+</html>
