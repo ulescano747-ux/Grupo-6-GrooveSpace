@@ -5,10 +5,11 @@
   "usuarios": [
     { "id": 1, "username": "musico1", "nombre": "Lucas", "rol": "musico", "password": "123" },
     { "id": 2, "username": "musico2", "nombre": "Valentina", "rol": "musico", "password": "123" },
-    { "id": 3, "username": "jefe", "nombre": "Martín", "rol": "dueño", "password": "123" },
-    { "id": 4, "username": "duena", "nombre": "Carolina", "rol": "dueño", "password": "123" },
-    { "id": 5, "username": "staff", "nombre": "Sofía", "rol": "encargado", "password": "123" },
-    { "id": 6, "username": "staff2", "nombre": "Diego", "rol": "encargado", "password": "123" }
+    { "id": 3, "username": "staff", "nombre": "Sofía", "rol": "encargado", "password": "123" },
+    { "id": 4, "username": "staff2", "nombre": "Diego", "rol": "encargado", "password": "123" },
+    { "id": 5, "username": "jefe", "nombre": "Martín", "rol": "dueño", "password": "123" },
+    { "id": 6, "username": "duena", "nombre": "Carolina", "rol": "dueño", "password": "123" }
+
   ],
   "salas": [
     { "id": "standard", "nombre": "Sala Standard", "estado": "Liberada", "precioFijo": 3500 },

@@ -13,7 +13,15 @@ router.get("/estado", (req, res) => {
 });
 
 router.get("/usuarios", (req, res) => {
-    res.json(usuarios);
+    res.json(usuarios.map(({ id, username, nombre, rol }) => ({ id, username, nombre, rol })));
+});
+
+router.post("/login", (req, res) => {
+    const { username, password } = req.body || {};
+    const usuario = usuarios.find(item => item.username === username && item.password === password);
+    if (!usuario) return res.status(401).json({ error: "Usuario o contraseña incorrectos." });
+    const { id, nombre, rol } = usuario;
+    res.json({ id, username: usuario.username, nombre, rol });
 });
 
 router.get("/salas", (req, res) => {
