@@ -42,6 +42,9 @@ h1, h2, h3{
     color: #ffffff;
 }
 
+footer p{
+    text-align: center;
+}
 .form-reserva{
     
 }
