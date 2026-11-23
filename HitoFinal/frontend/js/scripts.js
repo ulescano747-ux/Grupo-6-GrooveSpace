@@ -15,6 +15,7 @@ async function iniciar() {
     configurarLogin();
     ponerFechaMinima();
     actualizarPantalla();
+    configurarReserva();
     if (error_api) mostrarErrorApi();
 }
 
@@ -243,6 +244,7 @@ function configurarReserva() {
 
     formulario.addEventListener("input", calcularTotal);
     formulario.addEventListener("change", calcularTotal);
+    calcularTotal();
     formulario.onsubmit = async function(event) {
         event.preventDefault();
         const usuario = obtenerUsuario();

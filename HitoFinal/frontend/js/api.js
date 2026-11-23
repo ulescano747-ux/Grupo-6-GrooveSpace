@@ -1,4 +1,4 @@
-const base_api = "https://grupo-6-groovespace.onrender.com/api";;
+const base_api = "https://grupo-6-groovespace.onrender.com/api";
 
 async function pedir(ruta, opciones = {}) {
     const respuesta = await fetch(base_api + ruta, {
