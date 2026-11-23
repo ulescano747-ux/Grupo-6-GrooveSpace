@@ -1,18 +1,21 @@
-const CLAVE_DATOS = "groovespace_datos";
-const CLAVE_USUARIO = "groovespace_usuario_activo";
+const clave_usuario = "groovespace_usuario_activo";
+let datos = { politicaCancelacion: { horasAnticipacion: 24 }, usuarios: [], salas: [], inventario: [], reservas: [] };
+let error_api = false;
 
 document.addEventListener("DOMContentLoaded", iniciar);
 
 async function iniciar() {
-    await cargarDatos();
+    try {
+        await cargarDatos();
+    } catch (error) {
+        error_api = true;
+        mostrarErrorApi();
+    }
     crearModalLogin();
     configurarLogin();
     ponerFechaMinima();
     actualizarPantalla();
-
-    window.addEventListener("storage", function(event) {
-        if (event.key === CLAVE_DATOS) actualizarPantalla();
-    });
+    if (error_api) mostrarErrorApi();
 }
 
 function crearModalLogin() {
@@ -28,90 +31,54 @@ function crearModalLogin() {
 }
 
 async function cargarDatos() {
-    const ruta = location.pathname.includes("/pages/") ? "../data/datos.json" : "data/datos.json";
+    let usuario = obtenerUsuario();
+    const [usuarios, salas, inventario] = await Promise.all([
+        api.usuarios(), api.salas(), api.inventario()
+    ]);
 
-    try {
-        const respuesta = await fetch(ruta);
-        if (!respuesta.ok) throw new Error("No se pudieron cargar los datos.");
-
-        const datos = await respuesta.json();
-        const guardados = leerDatos();
-
-        if (guardados) {
-            (guardados.salas || []).forEach(salaVieja => {
-                const sala = datos.salas.find(item => item.id === salaVieja.id);
-                if (sala) {
-                    if (salaVieja.estado === "Disponible") sala.estado = "Liberada";
-                    else if (salaVieja.estado === "Mantenimiento") sala.estado = "En mantenimiento";
-                    else sala.estado = salaVieja.estado;
-                }
-            });
-
-            (guardados.inventario || []).forEach(itemViejo => {
-                const item = datos.inventario.find(actual => actual.id === itemViejo.id);
-                if (item) item.enUso = itemViejo.enUso;
-            });
-
-            (guardados.reservas || []).forEach(reservaVieja => {
-                const indice = datos.reservas.findIndex(item => item.id === reservaVieja.id);
-                if (indice === -1) datos.reservas.push(reservaVieja);
-                else datos.reservas[indice] = reservaVieja;
-            });
-        }
-
-        datos.reservas.forEach(reserva => normalizarReserva(reserva, datos));
-        guardarDatos(datos);
-    } catch (error) {
-        if (!leerDatos()) {
-            console.error(error);
-            guardarDatos({ politicaCancelacion: { horasAnticipacion: 24 }, usuarios: [], salas: [], inventario: [], reservas: [] });
-        }
+    if (usuario) {
+        usuario = usuarios.find(item => item.username === usuario.username);
+        if (usuario) localStorage.setItem(clave_usuario, JSON.stringify(usuario));
+        else localStorage.removeItem(clave_usuario);
     }
-}
 
-function normalizarReserva(reserva, datos) {
-    const sala = datos.salas.find(item => item.id === reserva.salaId || item.nombre === reserva.sala);
-    if (sala) {
-        reserva.salaId = sala.id;
-        reserva.sala = sala.nombre;
-    }
-    if (!reserva.hora) reserva.hora = "18:00";
-    if (!reserva.duracion) reserva.duracion = 1;
-    if (!reserva.estado) reserva.estado = "Confirmada";
-    if (reserva.demora === undefined) reserva.demora = false;
-    if (!reserva.total) reserva.total = reserva.precio || 0;
-    if (!reserva.extras) reserva.extras = reserva.insExtra || [];
+    const reservas = usuario ? await api.reservas(usuario.id) : [];
+    error_api = false;
 
-    reserva.extras = reserva.extras.map(extra => {
-        const item = datos.inventario.find(equipo =>
-            equipo.id === extra || equipo.tipo.toLowerCase() === String(extra).toLowerCase()
-        );
-        return item ? item.id : extra;
-    });
-}
-
-function leerDatos() {
-    try {
-        const datos = JSON.parse(localStorage.getItem(CLAVE_DATOS));
-        return datos && Array.isArray(datos.usuarios) ? datos : null;
-    } catch (error) {
-        return null;
-    }
+    datos = {
+        politicaCancelacion: { horasAnticipacion: 24 },
+        usuarios,
+        salas: salas.map(sala => ({
+            id: sala.id, nombre: sala.nombre, estado: sala.estado, precioFijo: sala.precio_hora
+        })),
+        inventario: inventario.map(item => ({
+            id: item.id, tipo: item.nombre, cantidadTotal: item.cantidad,
+            enUso: item.cantidad - item.disponibles, precioHora: item.precio_hora
+        })),
+        reservas: reservas.map(reserva => ({
+            ...reserva,
+            usuarioId: reserva.usuario_id,
+            salaId: reserva.sala_id,
+            estado: reserva.estado === "En uso" ? "En curso" : reserva.estado,
+            mensajeDemora: reserva.mensaje_demora
+        }))
+    };
 }
 
 function obtenerDatos() {
-    return leerDatos() || { politicaCancelacion: { horasAnticipacion: 24 }, usuarios: [], salas: [], inventario: [], reservas: [] };
+    return datos;
 }
 
-function guardarDatos(datos) {
-    localStorage.setItem(CLAVE_DATOS, JSON.stringify(datos));
+function mostrarErrorApi() {
+    const lista = document.getElementById("lista-salas");
+    if (lista) lista.textContent = "No se pudo conectar con el servidor. Revisa que el backend esté iniciado.";
 }
 
 function obtenerUsuario() {
     try {
-        return JSON.parse(localStorage.getItem(CLAVE_USUARIO));
+        return JSON.parse(localStorage.getItem(clave_usuario));
     } catch (error) {
-        localStorage.removeItem(CLAVE_USUARIO);
+        localStorage.removeItem(clave_usuario);
         return null;
     }
 }
@@ -126,22 +93,19 @@ function configurarLogin() {
     if (cerrar && modal) cerrar.onclick = function() { modal.classList.remove("activo"); };
     if (!formulario) return;
 
-    formulario.onsubmit = function(event) {
+    formulario.onsubmit = async function(event) {
         event.preventDefault();
         const nombre = document.getElementById("login-user").value.trim().toLowerCase();
         const clave = document.getElementById("login-pass").value;
-        const usuario = obtenerDatos().usuarios.find(item =>
-            item.username.toLowerCase() === nombre && item.password === clave
-        );
-
-        if (!usuario) {
-            alert("Usuario o contraseña incorrectos.");
-            return;
+        try {
+            const usuario = await api.login(nombre, clave);
+            localStorage.setItem(clave_usuario, JSON.stringify(usuario));
+            if (modal) modal.classList.remove("activo");
+            await cargarDatos();
+            actualizarPantalla();
+        } catch (error) {
+            alert(error.message);
         }
-
-        localStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
-        if (modal) modal.classList.remove("activo");
-        actualizarPantalla();
     };
 }
 
@@ -191,7 +155,7 @@ function actualizarMenu() {
     salir.className = "btn-salir";
     salir.textContent = "Cerrar sesión";
     salir.onclick = function() {
-        localStorage.removeItem(CLAVE_USUARIO);
+        localStorage.removeItem(clave_usuario);
         location.href = location.pathname.includes("/pages/") ? "../index.html" : "index.html";
     };
     contenedor.append(nombre, salir);
@@ -254,41 +218,6 @@ function fechaHora(fecha, hora) {
     return new Date(fecha + "T" + hora + ":00");
 }
 
-function hayCruce(salaId, fecha, hora, duracion, datos) {
-    const inicioNuevo = fechaHora(fecha, hora).getTime();
-    const finNuevo = inicioNuevo + duracion * 60 * 60 * 1000;
-
-    return datos.reservas.some(reserva => {
-        if (reserva.salaId !== salaId || reserva.estado === "Cancelada" || reserva.estado === "Finalizada") return false;
-        const inicio = fechaHora(reserva.fecha, reserva.hora).getTime();
-        const fin = inicio + reserva.duracion * 60 * 60 * 1000;
-        return inicioNuevo < fin && inicio < finNuevo;
-    });
-}
-
-function extrasDisponibles(extras, fecha, hora, duracion, datos) {
-    const inicioNuevo = fechaHora(fecha, hora).getTime();
-    const finNuevo = inicioNuevo + duracion * 60 * 60 * 1000;
-
-    for (let i = 0; i < extras.length; i++) {
-        const item = datos.inventario.find(inventario => inventario.id === extras[i]);
-        if (!item) return false;
-
-        let ocupados = 0;
-        datos.reservas.forEach(reserva => {
-            if (reserva.estado === "Cancelada" || reserva.estado === "Finalizada") return;
-            const inicioReserva = fechaHora(reserva.fecha, reserva.hora).getTime();
-            const finReserva = inicioReserva + reserva.duracion * 60 * 60 * 1000;
-            const cruce = inicioNuevo < finReserva && inicioReserva < finNuevo;
-            if (cruce && (reserva.extras || []).includes(item.id)) ocupados++;
-        });
-
-        const usoActual = fecha === fechaLocal() ? item.enUso : 0;
-        if (item.cantidadTotal - usoActual - ocupados < 1) return false;
-    }
-    return true;
-}
-
 function configurarReserva() {
     const formulario = document.getElementById("form-reserva");
     const select = document.getElementById("sala");
@@ -314,12 +243,12 @@ function configurarReserva() {
 
     formulario.addEventListener("input", calcularTotal);
     formulario.addEventListener("change", calcularTotal);
-    formulario.onsubmit = function(event) {
+    formulario.onsubmit = async function(event) {
         event.preventDefault();
         const usuario = obtenerUsuario();
         if (!usuario || usuario.rol !== "musico") {
             alert("Inicia sesión como músico para solicitar una reserva.");
-            location.href = "../index.html";
+            document.getElementById("modal-login").classList.add("activo");
             return;
         }
 
@@ -340,31 +269,19 @@ function configurarReserva() {
             alert("El horario debe ser posterior al momento actual.");
             return;
         }
-        if (hayCruce(sala.id, fecha, hora, horas, datos)) {
-            alert("La sala ya tiene una reserva en ese horario.");
-            return;
+        try {
+            const reserva = await api.crear_reserva({
+                usuario_id: usuario.id,
+                sala_id: sala.id,
+                fecha,
+                hora,
+                duracion: horas,
+                extras
+            });
+            location.href = "confirmacion.html?id=" + reserva.id;
+        } catch (error) {
+            alert(error.message);
         }
-        if (!extrasDisponibles(extras, fecha, hora, horas, datos)) {
-            alert("No hay suficiente equipamiento disponible para ese horario.");
-            return;
-        }
-
-        const reserva = {
-            id: Date.now(),
-            usuarioId: usuario.id,
-            salaId: sala.id,
-            sala: sala.nombre,
-            fecha: fecha,
-            hora: hora,
-            duracion: horas,
-            extras: extras,
-            estado: "Confirmada",
-            demora: false,
-            total: importe
-        };
-        datos.reservas.push(reserva);
-        guardarDatos(datos);
-        location.href = "confirmacion.html?id=" + reserva.id;
     };
 }
 
@@ -440,18 +357,15 @@ function sePuedeCancelar(reserva, datos) {
     return inicio - Date.now() >= horas * 60 * 60 * 1000;
 }
 
-function cancelarReserva(id) {
+async function cancelarReserva(id) {
     if (!confirm("¿Quieres cancelar esta reserva?")) return;
-    const datos = obtenerDatos();
-    const reserva = datos.reservas.find(item => item.id === id);
-    if (!reserva || !sePuedeCancelar(reserva, datos)) {
-        alert("Ya no se puede cancelar con la anticipación requerida.");
-        return;
+    try {
+        await api.cancelar_reserva(id, obtenerUsuario().id);
+        await cargarDatos();
+        mostrarMisReservas();
+    } catch (error) {
+        alert(error.message);
     }
-
-    reserva.estado = "Cancelada";
-    guardarDatos(datos);
-    mostrarMisReservas();
 }
 
 function mostrarConfirmacion() {
@@ -529,55 +443,35 @@ function botonesReserva(reserva) {
     return "";
 }
 
-window.cambiarEstadoSala = function(id, estado) {
-    const datos = obtenerDatos();
-    const sala = datos.salas.find(item => item.id === id);
-    if (!sala) return;
-    sala.estado = estado;
-    guardarDatos(datos);
-    mostrarPanelEncargado();
-};
-
-window.iniciarEnsayo = function(id) {
-    cambiarEstadoReserva(id, "En curso");
-};
-
-window.finalizarEnsayo = function(id) {
-    cambiarEstadoReserva(id, "Finalizada");
-    const datos = obtenerDatos();
-    const reserva = datos.reservas.find(item => item.id === id);
-    if (reserva) {
-        const sala = datos.salas.find(item => item.id === reserva.salaId);
-        if (sala) sala.estado = "Liberada";
-        guardarDatos(datos);
+async function ejecutar(accion) {
+    try {
+        await accion();
+        await cargarDatos();
+        actualizarPantalla();
+    } catch (error) {
+        alert(error.message);
     }
-    mostrarPanelEncargado();
-};
+}
 
-function cambiarEstadoReserva(id, estado) {
-    const datos = obtenerDatos();
-    const reserva = datos.reservas.find(item => item.id === id);
-    if (!reserva) return;
-    reserva.estado = estado;
+window.cambiarEstadoSala = (id, estado) => ejecutar(() =>
+    api.estado_sala(id, obtenerUsuario().id, estado)
+);
 
-    if (estado === "En curso") {
-        const sala = datos.salas.find(item => item.id === reserva.salaId);
-        if (sala) sala.estado = "En uso";
-    }
+window.iniciarEnsayo = id => ejecutar(async () => {
+    const reserva = obtenerDatos().reservas.find(item => item.id === id);
+    await api.estado_reserva(id, obtenerUsuario().id, "En uso");
+    await api.estado_sala(reserva.salaId, obtenerUsuario().id, "En uso");
+});
 
-    guardarDatos(datos);
-    mostrarPanelEncargado();
-};
+window.finalizarEnsayo = id => ejecutar(async () => {
+    const reserva = obtenerDatos().reservas.find(item => item.id === id);
+    await api.estado_reserva(id, obtenerUsuario().id, "Finalizada");
+    await api.estado_sala(reserva.salaId, obtenerUsuario().id, "Liberada");
+});
 
-window.avisarDemora = function(id) {
-    const datos = obtenerDatos();
-    const reserva = datos.reservas.find(item => item.id === id);
-    if (!reserva) return;
-    reserva.demora = true;
-    reserva.mensajeDemora = "El ensayo anterior tuvo una demora. Consulta al encargado para más información.";
-    guardarDatos(datos);
-    mostrarPanelEncargado();
-};
+window.avisarDemora = id => ejecutar(() =>
+    api.demora(id, obtenerUsuario().id, true, "El ensayo anterior tuvo una demora. Consulta al encargado para más información.")
+);
 
 function mostrarPanelDueno() {
     const principal = document.querySelector("main");
@@ -629,6 +523,7 @@ function mostrarPanelDueno() {
         "<input type='date' id='fecha-reporte' value='" + fecha + "'> " +
         "<button type='button' onclick='generarReporteDiario()'>Ver reporte</button>" +
         "<div id='resultado-reporte'>" + reporteDiario(fecha, datos) + "</div></section>";
+    generarReporteDiario();
 }
 
 function crearTabla(titulos, filas) {
@@ -640,10 +535,19 @@ function crearTabla(titulos, filas) {
         encabezado + "</tr></thead><tbody>" + cuerpo + "</tbody></table></div>";
 }
 
-function generarReporteDiario() {
+async function generarReporteDiario() {
     const fecha = document.getElementById("fecha-reporte").value;
     const resultado = document.getElementById("resultado-reporte");
-    if (resultado) resultado.innerHTML = reporteDiario(fecha, obtenerDatos());
+    if (!resultado || !fecha) return;
+
+    try {
+        const reporte = await api.reporte(fecha, obtenerUsuario().id);
+        const filas = reporte.por_sala.map(item => [item.sala, item.reservas, item.horas_ocupadas + " h"]);
+        resultado.innerHTML = "<p>" + formatearFecha(fecha) + ": " + reporte.total_reservas +
+            " reserva(s).</p>" + crearTabla(["Sala", "Reservas", "Horas"], filas);
+    } catch (error) {
+        resultado.textContent = error.message;
+    }
 }
 
 function reporteDiario(fecha, datos) {

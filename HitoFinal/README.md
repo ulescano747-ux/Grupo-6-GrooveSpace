@@ -3,17 +3,17 @@
 ## Hito final
 
 ## Iniciar
-desde la carpeta de la pagina, abres el terminal o el node.js y colocas
+Desde una terminal, entra a la carpeta `backend` y ejecuta:
 
 ```bash
+cd backend
 npm install
 npm start
 ```
-El servidor usa el puerto 3000 por defecto. En Render toma el puerto de la variable `PORT`. Para permitir un frontend publicado en otro dominio, configura `FRONTEND_URL` con la dirección del sitio. En local se permite cualquier origen.
 
 ## Usuarios para la demostración
 
-`GET /api/usuarios` devuelve los usuarios y sus roles. Los identificadores 1 y 2 son músicos, 3 y 4 encargados, y 5 y 6 dueños. Como el hito permite simular los roles, las operaciones reciben `usuario_id`; no es un sistema de inicio de sesión ni sirve como control de acceso para un sistema real.
+El inicio de sesión usa usuarios de prueba con la contraseña `123`: `musico1`, `musico2`, `staff`, `staff2`, `jefe` y `duena`. Los identificadores 1 y 2 son músicos, 3 y 4 encargados, y 5 y 6 dueños. Es una cuenta de demostración; no es un sistema de autenticación para uso real.
 
 ## Endpoints
 
@@ -21,6 +21,7 @@ El servidor usa el puerto 3000 por defecto. En Render toma el puerto de la varia
 | --- | --- | --- |
 | GET | `/api/estado` | Ver si el servidor responde. |
 | GET | `/api/usuarios` | Consultar los usuarios de prueba. |
+| POST | `/api/login` | Validar el usuario de demostración. |
 | GET | `/api/salas` | Consultar salas, estado y precio por hora. |
 | GET | `/api/monitor` | Consultar solo nombre y estado de cada sala, sin datos de bandas. |
 | GET | `/api/inventario` | Consultar equipos, cantidades y disponibilidad actual. |

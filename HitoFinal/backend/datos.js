@@ -1,10 +1,10 @@
 const usuarios = [
-    { id: 1, nombre: "Lucas", rol: "musico" },
-    { id: 2, nombre: "Valentina", rol: "musico" },
-    { id: 3, nombre: "Sofía", rol: "encargado" },
-    { id: 4, nombre: "Diego", rol: "encargado" },
-    { id: 5, nombre: "Martín", rol: "dueño" },
-    { id: 6, nombre: "Carolina", rol: "dueño" }
+    { id: 1, username: "musico1", password: "123", nombre: "Lucas", rol: "musico" },
+    { id: 2, username: "musico2", password: "123", nombre: "Valentina", rol: "musico" },
+    { id: 3, username: "staff", password: "123", nombre: "Sofía", rol: "encargado" },
+    { id: 4, username: "staff2", password: "123", nombre: "Diego", rol: "encargado" },
+    { id: 5, username: "jefe", password: "123", nombre: "Martín", rol: "dueño" },
+    { id: 6, username: "duena", password: "123", nombre: "Carolina", rol: "dueño" }
 ];
 
 const salas = [
