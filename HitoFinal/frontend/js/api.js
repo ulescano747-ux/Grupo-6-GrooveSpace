@@ -1,4 +1,4 @@
-const base_api = window.GROOVESPACE_API || "http://localhost:3000/api";
+const base_api = "https://grupo-6-groovespace.onrender.com/api";
 
 async function pedir(ruta, opciones = {}) {
     const respuesta = await fetch(base_api + ruta, {
