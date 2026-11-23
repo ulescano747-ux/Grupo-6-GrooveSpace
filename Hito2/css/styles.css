@@ -42,6 +42,19 @@ h1, h2, h3{
     color: #ffffff;
 }
 
+footer p{
+    text-align: center;
+}
 .form-reserva{
     
 }
+
+const texto=prompt("Ingrese su nombre");
+mensaje=promt (inserte su nombre)
+alert (hola%mensaje%)
+
+fuction saludar() {
+    var mensaje = prompt("Inserte su nombre");
+    alert("Hola " + mensaje);
+}
+)
