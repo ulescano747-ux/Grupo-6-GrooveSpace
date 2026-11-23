@@ -22,7 +22,9 @@ npm start
 
 Abre `HitoFinal/frontend` con un servidor local, por ejemplo Live Server de Visual Studio Code, y entra a `index.html`. No abras el archivo directamente con `file://`, porque la página consulta la API con `fetch`.
 
-El frontend está configurado para usar el backend publicado. Para probar ambos proyectos en local, cambia temporalmente `base_api` en `frontend/js/api.js` a `http://localhost:3000/api`.
+El frontend está configurado para usar el backend publicado. 
+
+Para probar ambos proyectos en local, cambia temporalmente `base_api` en `frontend/js/api.js` a `http://localhost:3000/api`.
 
 En Render, configura la variable `FRONTEND_URL` del backend con `https://grupo-6-groovespace-fqdx.onrender.com`.
 
@@ -48,7 +50,7 @@ Todos usan la contraseña `123`: `musico1` y `musico2` son músicos; `staff` y `
 | PATCH | `/api/salas/:id/estado` | Actualizar el estado operativo de una sala. |
 | GET | `/api/reportes/diario?fecha=AAAA-MM-DD&usuario_id=5` | Consultar el reporte diario como dueño. |
 
-Las respuestas y errores de la API se envían en JSON. Las reservas y los estados se guardan en memoria mientras el servidor está activo, según el alcance del MVP.
+Las respuestas y errores de la API se envían en JSON. Las reservas y los estados se guardan en memoria mientras el servidor está activo.
 
 ### Crear una reserva
 
